@@ -9,9 +9,10 @@
 # - AAAA: Año (4 dígitos)
 # - TT: Letras del tipo de carrera (2 letras mayúsculas)
 # - CCCC: Código (4 dígitos)
- # EnrollmentAutomaton.py
- 
+# EnrollmentAutomaton.py
+from datetime import datetime
 from BaseAutomaton import BaseAutomaton
+
 
 class EnrollmentAutomaton(BaseAutomaton):
     def __init__(self):
@@ -28,10 +29,35 @@ class EnrollmentAutomaton(BaseAutomaton):
             9: {'D': 10, 'X': 13},
             10: {'D': 11, 'X': 13},
             11: {'D': 12, 'X': 13},
-            12: {'X': 13},
-            13: {'X': 13}
+            12: {},  # Final state, no más transiciones
+            13: {'X': 13}  # Estado de rechazo
         }
-        super().__init__(transitions)
+        final_states = {12}
+        reject_state = 13
+        super().__init__(transitions, final_states, reject_state)
+
+    def validate_with_trace(self, string):
+        string = string.strip()
+        valid_format, trace, final_state = self.run_trace(string)
+
+        if not valid_format:
+            trace.append(f"Invalid format: ended in state {final_state}")
+            return False, trace
+
+        # Validación extra: año correcto
+        year_part = string[:4]
+        try:
+            year_int = int(year_part)
+            current_year = datetime.now().year
+            if year_int < current_year:
+                trace.append(f"Year check passed: {year_part} < {current_year}")
+                return True, trace
+            else:
+                trace.append(f"Year check failed: {year_part} is not less than {current_year}")
+                return False, trace
+        except ValueError:
+            trace.append("Year parsing error.")
+            return False, trace
 
 
 if __name__ == "__main__":
